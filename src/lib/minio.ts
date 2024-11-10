@@ -1,49 +1,60 @@
-import * as Minio from "minio";
+import AWS from 'aws-sdk';
 
-export async function uploadToMINIO(file: File) {
+export async function uploadToMinIO(file: File) {
   try {
-    const minioClient = new Minio.Client({
-      endPoint: process.env.NEXT_PUBLIC_MINIO_ENDPOINT!,
-      port: parseInt(process.env.NEXT_PUBLIC_MINIO_PORT!, 10),
-      useSSL: true,
-      accessKey: process.env.NEXT_PUBLIC_MINIO_ACCESS_KEY!,
-      secretKey: process.env.NEXT_PUBLIC_MINIO_SECRET_KEY!,
-      region: process.env.NEXT_PUBLIC_MINIO_REGION!, // Set the region here if needed
+    // Configure AWS SDK for MinIO
+    AWS.config.update({
+      accessKeyId: process.env.NEXT_PUBLIC_MINIO_ACCESS_KEY!,
+      secretAccessKey: process.env.NEXT_PUBLIC_MINIO_SECRET_KEY!,
     });
 
-    const bucketName = process.env.NEXT_PUBLIC_MINIO_BUCKET_NAME!;
-    const file_key =
-      "uploads/" + Date.now().toString() + file.name.replace(" ", "-");
+    const sslEnabled = process.env.NEXT_PUBLIC_MINIO_SSL === 'true';
+    const endpoint = `${sslEnabled ? 'https' : 'http'}://${process.env.NEXT_PUBLIC_MINIO_ENDPOINT}:${process.env.NEXT_PUBLIC_MINIO_PORT}`;
 
+    const s3 = new AWS.S3({
+      endpoint,
+      s3ForcePathStyle: true, // Needed for MinIO
+      signatureVersion: 'v4', // Ensure correct signature version
+      region: process.env.NEXT_PUBLIC_MINIO_REGION || 'us-east-1', // Default region
+    });
+
+    const file_key = "uploads/" + Date.now().toString() + file.name.replace(/\s+/g, "-");
     const params = {
-      bucketName: bucketName, // The name of the bucket
-      objectName: file_key, // The name of the file as it will appear in MinIO
-      filePath: file.webkitRelativePath, // The path of the file on your local system
+      Bucket: process.env.NEXT_PUBLIC_MINIO_BUCKET_NAME!,
+      Key: file_key,
+      Body: file,
     };
 
-    // Upload the file using fPutObject
-    const upload = minioClient.fPutObject(
-      params.bucketName,
-      params.objectName,
-      params.filePath
-    );
+    // Upload file to MinIO
+    const upload = s3
+      .putObject(params)
+      .on('httpUploadProgress', (evt) => {
+        console.log('Uploading to MinIO...', Math.round((evt.loaded * 100) / evt.total));
+      })
+      .promise();
 
-    await upload.then(() => {
-      console.log("Successfully  uploaded to minIO!", file_key);
-    });
+    await upload;
+    console.log('Successfully uploaded to MinIO!', file_key);
 
-    return Promise.resolve({
+    return {
       file_key,
       file_name: file.name,
-    });
-  } catch (error) {}
+    };
+  } catch (error) {
+    console.error('Error uploading file to MinIO:', error);
+    throw new Error('Upload failed');
+  }
 }
 
 export function getMinioUrl(file_key: string) {
   const bucketName = process.env.NEXT_PUBLIC_MINIO_BUCKET_NAME;
-  const minioPort = process.env.NEXT_PUBLIC_MINIO_PORT; // Port for MinIO
-
-  const url = `http://play.min.io:${minioPort}/browser/${bucketName}/${file_key}`;
+  const minioPort = process.env.NEXT_PUBLIC_MINIO_PORT || '9000'; // Default MinIO port
+  const minioEndpoint = process.env.NEXT_PUBLIC_MINIO_ENDPOINT?.replace(/^http?:\/\//, '') || 'localhost';
+  const sslEnabled = process.env.NEXT_PUBLIC_MINIO_SSL === 'true';
+  
+  // Construct MinIO URL
+  const protocol = sslEnabled ? 'https' : 'http';
+  const url = `${protocol}://${minioEndpoint}:${minioPort}/${bucketName}/${file_key}`;
 
   return url;
 }

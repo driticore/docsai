@@ -1,13 +1,9 @@
 import { FileUploadComponent } from "@/components/FileUpload";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
-import MobileFileUpload from "@/components/MobileFileUpload";
 import { Button } from "@/components/ui/button";
-import { FileUpload } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import ClientUser from "@/components/User";
-import User from "@/components/User";
-import { useUser } from "@clerk/nextjs";
-import { RiCheckLine, RiUpload2Line } from "@remixicon/react";
+import { RiCheckLine } from "@remixicon/react";
 import React from "react";
 
 function DocumentAnalysis() {
@@ -22,12 +18,10 @@ function DocumentAnalysis() {
             Here to give you advice on your document
           </p>
         </div>
-        <MaxWidthWrapper className="items-center md:flex hidden">
-          <FileUploadComponent />
+        <MaxWidthWrapper className="items-center ">
+          <FileUploadComponent/>
         </MaxWidthWrapper>
-        <div className="md:hidden flex mt-10 z-10">
-          <MobileFileUpload/>
-        </div>
+
         
         
       </main>
@@ -36,7 +30,7 @@ function DocumentAnalysis() {
           <Input type="text" placeholder="Enter a prompt here" className="md:w-1/2 w-full p-6 border-2"/>
           <Button type="submit" className="p-6"><RiCheckLine/></Button>
         </div>
-        <span className="text-center text-[12px]">Gemini may display inaccurate info, including about people, so double-check its responses. Your privacy and Gemini Apps</span>
+        <span className="text-center text-[12px]">DocsAI may display inaccurate info, including about people, so double-check its responses. Your privacy and DocsAI Apps</span>
 
       </footer>
     </>

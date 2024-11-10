@@ -30,7 +30,7 @@ export default async function Home() {
             {isAuth ? (
             <Link href="/pages/features">
             <Button variant="default" size="lg">
-              Create Today
+              Create Today 🎉
             </Button>
           </Link>
             ):(
@@ -60,7 +60,7 @@ export default async function Home() {
               <div className="mt-10 justify-center flex gap-10">
                 <Link href="#">
                   <Button variant="default" size="lg">
-                    Get Started
+                    Get Started 🎁
                   </Button>
                 </Link>
               </div>
